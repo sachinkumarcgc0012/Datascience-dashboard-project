@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eye Health Analytics Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>👁️ Eye Health Analytics Dashboard</h1>
+            <p class="subtitle">Data-driven insights for patient vision and risk analysis</p>
+        </header>
+
+        <div class="main-wrapper">
+            <aside class="sidebar">
+                <div class="filters-container">
+                    <form method="GET" action="/">
+                        <div class="filter-group">
+                            <label>Gender</label>
+                            <select name="gender">
+                                <option value="">All</option>
+                                {% for gender in genders %}
+                                <option value="{{ gender }}" {% if filters.gender == gender %}selected{% endif %}>{{ gender }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Age Range</label>
+                            <div class="range-display">
+                                <div>
+                                    <span class="range-label">Selected Min</span>
+                                    <span class="range-value" id="age-min-value">{{ filters.age_min or 1 }}</span>
+                                </div>
+                                <div>
+                                    <span class="range-label">Selected Max</span>
+                                    <span class="range-value" id="age-max-value">{{ filters.age_max or 100 }}</span>
+                                </div>
+                            </div>
+                            <div class="slider-inputs">
+                                <div class="slider-control">
+                                    <input type="range" name="age_min" id="age-min-slider" min="1" max="100" step="1" value="{{ filters.age_min or 1 }}">
+                                </div>
+                                <div class="slider-control">
+                                    <input type="range" name="age_max" id="age-max-slider" min="1" max="100" step="1" value="{{ filters.age_max or 100 }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Eye Disease</label>
+                            <select name="eye_disease">
+                                <option value="">All</option>
+                                {% for disease in eye_diseases %}
+                                <option value="{{ disease }}" {% if filters.eye_disease == disease %}selected{% endif %}>{{ disease }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Risk Category</label>
+                            <select name="risk_category">
+                                <option value="">All</option>
+                                {% for risk in risk_categories %}
+                                <option value="{{ risk }}" {% if filters.risk_category == risk %}selected{% endif %}>{{ risk }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Uses Glasses</label>
+                            <select name="uses_glasses">
+                                <option value="">All</option>
+                                <option value="Yes" {% if filters.uses_glasses == 'Yes' %}selected{% endif %}>Yes</option>
+                                <option value="No" {% if filters.uses_glasses == 'No' %}selected{% endif %}>No</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Surgery History</label>
+                            <select name="surgery_history">
+                                <option value="">All</option>
+                                <option value="Yes" {% if filters.surgery_history == 'Yes' %}selected{% endif %}>Yes</option>
+                                <option value="No" {% if filters.surgery_history == 'No' %}selected{% endif %}>No</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Screen Time (Hours)</label>
+                            <div class="range-display">
+                                <div>
+                                    <span class="range-label">Selected Min</span>
+                                    <span class="range-value" id="screen-min-value">{{ filters.screen_min or 0.0 }}</span>
+                                </div>
+                                <div>
+                                    <span class="range-label">Selected Max</span>
+                                    <span class="range-value" id="screen-max-value">{{ filters.screen_max or 24.0 }}</span>
+                                </div>
+                            </div>
+                            <div class="slider-inputs">
+                                <div class="slider-control">
+                                    <input type="range" name="screen_min" id="screen-min-slider" min="0" max="24" step="0.1" value="{{ filters.screen_min or 0.0 }}">
+                                </div>
+                                <div class="slider-control">
+                                    <input type="range" name="screen_max" id="screen-max-slider" min="0" max="24" step="0.1" value="{{ filters.screen_max or 24.0 }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn-filter">Apply Filters</button>
+                        <a href="/" class="btn-reset">Reset</a>
+                    </form>
+                </div>
+            </aside>
+
+            <main class="main-content">
+                <div class="data-overview-container">
+                    <div class="data-overview-section">
+                        <div class="section-header">
+                            <h2>Dashboard Overview</h2>
+                        </div>
+
+                        <div class="kpi-grid">
+                            <div class="kpi-card">
+                                <div class="kpi-icon">👥</div>
+                                <div class="kpi-value">{{ kpis.total_patients }}</div>
+                                <div class="kpi-label">Total Patients</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-icon">🖥️</div>
+                                <div class="kpi-value">{{ kpis.avg_screen_time }}h</div>
+                                <div class="kpi-label">Avg Screen Time</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-icon">👁️</div>
+                                <div class="kpi-value">{{ kpis.avg_eye_pressure }}</div>
+                                <div class="kpi-label">Avg Eye Pressure</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-icon">⚡</div>
+                                <div class="kpi-value">{{ kpis.avg_eye_strain }}</div>
+                                <div class="kpi-label">Avg Eye Strain Level</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-icon">⬅️</div>
+                                <div class="kpi-value">{{ kpis.avg_vision_left }}</div>
+                                <div class="kpi-label">Avg Vision (Left Eye)</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-icon">➡️</div>
+                                <div class="kpi-value">{{ kpis.avg_vision_right }}</div>
+                                <div class="kpi-label">Avg Vision (Right Eye)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-header">
+                    <h2>Data Visualizations</h2>
+                </div>
+                <div class="graph-grid">
+                    <div class="graph-card">
+                        <img src="{{ url_for('static', filename='images/gender_distribution.png') }}" alt="Gender Distribution">
+                    </div>
+                    <div class="graph-card">
+                        <img src="{{ url_for('static', filename='images/eye_disease_distribution.png') }}" alt="Eye Disease Distribution">
+                    </div>
+                    <div class="graph-card">
+                        <img src="{{ url_for('static', filename='images/risk_category_distribution.png') }}" alt="Risk Category Distribution">
+                    </div>
+                    <div class="graph-card">
+                        <img src="{{ url_for('static', filename='images/screen_time_vs_eye_strain.png') }}" alt="Screen Time vs Eye Strain">
+                    </div>
+                    <div class="graph-card">
+                        <img src="{{ url_for('static', filename='images/eye_pressure_distribution.png') }}" alt="Eye Pressure Distribution">
+                    </div>
+                    <div class="graph-card">
+                        <img src="{{ url_for('static', filename='images/disease_vs_risk.png') }}" alt="disease_vs_risk.png">
+                    </div>
+                </div>
+
+                <div class="section-header">
+                    <h2>Dataset Summary Statistics</h2>
+                </div>
+                <div class="summary-card">
+                    <h3>Key Statistics</h3>
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Age</th>
+                                <th>Vision (Left)</th>
+                                <th>Vision (Right)</th>
+                                <th>Screen Time (h)</th>
+                                <th>Eye Pressure</th>
+                                <th>Eye Strain Level</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Mean</td>
+                                <td>{{ summary_stats.mean.Age | round(1) }}</td>
+                                <td>{{ summary_stats.mean.Vision_Left_Eye | round(2) }}</td>
+                                <td>{{ summary_stats.mean.Vision_Right_Eye | round(2) }}</td>
+                                <td>{{ summary_stats.mean.Screen_Time_Hours | round(1) }}</td>
+                                <td>{{ summary_stats.mean.Eye_Pressure | round(1) }}</td>
+                                <td>{{ summary_stats.mean.Eye_Strain_Level | round(1) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Median</td>
+                                <td>{{ summary_stats.median.Age | round(1) }}</td>
+                                <td>{{ summary_stats.median.Vision_Left_Eye | round(2) }}</td>
+                                <td>{{ summary_stats.median.Vision_Right_Eye | round(2) }}</td>
+                                <td>{{ summary_stats.median.Screen_Time_Hours | round(1) }}</td>
+                                <td>{{ summary_stats.median.Eye_Pressure | round(1) }}</td>
+                                <td>{{ summary_stats.median.Eye_Strain_Level | round(1) }}</td>
+                            </tr>
+                            <tr>
+                                <td>Minimum</td>
+                                <td>{{ summary_stats.min.Age }}</td>
+                                <td>{{ summary_stats.min.Vision_Left_Eye }}</td>
+                                <td>{{ summary_stats.min.Vision_Right_Eye }}</td>
+                                <td>{{ summary_stats.min.Screen_Time_Hours }}</td>
+                                <td>{{ summary_stats.min.Eye_Pressure }}</td>
+                                <td>{{ summary_stats.min.Eye_Strain_Level }}</td>
+                            </tr>
+                            <tr>
+                                <td>Maximum</td>
+                                <td>{{ summary_stats.max.Age }}</td>
+                                <td>{{ summary_stats.max.Vision_Left_Eye }}</td>
+                                <td>{{ summary_stats.max.Vision_Right_Eye }}</td>
+                                <td>{{ summary_stats.max.Screen_Time_Hours }}</td>
+                                <td>{{ summary_stats.max.Eye_Pressure }}</td>
+                                <td>{{ summary_stats.max.Eye_Strain_Level }}</td>
+                            </tr>
+                            <tr>
+                                <td>Std Deviation</td>
+                                <td>{{ summary_stats.std.Age | round(1) }}</td>
+                                <td>{{ summary_stats.std.Vision_Left_Eye | round(2) }}</td>
+                                <td>{{ summary_stats.std.Vision_Right_Eye | round(2) }}</td>
+                                <td>{{ summary_stats.std.Screen_Time_Hours | round(1) }}</td>
+                                <td>{{ summary_stats.std.Eye_Pressure | round(1) }}</td>
+                                <td>{{ summary_stats.std.Eye_Strain_Level | round(1) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="section-header">
+                    <h2>Top 20 Patient Records</h2>
+                </div>
+                <div class="table-container">
+                    <table class="records-table">
+                        <thead>
+                            <tr>
+                                <th>Patient ID</th>
+                                <th>Age</th>
+                                <th>Gender</th>
+                                <th>Vision (L / R)</th>
+                                <th>Screen Time</th>
+                                <th>Eye Disease</th>
+                                <th>Glasses</th>
+                                <th>Risk Category</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in top_records %}
+                            <tr>
+                                <td>{{ record.Patient_ID }}</td>
+                                <td>{{ record.Age }}</td>
+                                <td>{{ record.Gender }}</td>
+                                <td>{{ record.Vision_Left_Eye }} / {{ record.Vision_Right_Eye }}</td>
+                                <td>{{ record.Screen_Time_Hours }}h</td>
+                                <td>{{ record.Eye_Disease }}</td>
+                                <td>{{ record.Uses_Glasses }}</td>
+                                <td>{{ record.Risk_Category }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+
+        <footer>
+            <p>Eye Health Analytics Dashboard - Patient Data Analytics Project</p>
+        </footer>
+    </div>
+    <script>
+        function updateRangeDisplay(minInputId, maxInputId, minLabelId, maxLabelId, formatter) {
+            const minInput = document.getElementById(minInputId);
+            const maxInput = document.getElementById(maxInputId);
+            const minLabel = document.getElementById(minLabelId);
+            const maxLabel = document.getElementById(maxLabelId);
+            if (!minInput || !maxInput || !minLabel || !maxLabel) return;
+
+            const updateValues = () => {
+                minLabel.textContent = formatter(minInput.value);
+                maxLabel.textContent = formatter(maxInput.value);
+            };
+
+            minInput.addEventListener('input', updateValues);
+            maxInput.addEventListener('input', updateValues);
+            updateValues();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateRangeDisplay('age-min-slider', 'age-max-slider', 'age-min-value', 'age-max-value', value => value);
+            updateRangeDisplay('screen-min-slider', 'screen-max-slider', 'screen-min-value', 'screen-max-value', value => parseFloat(value).toFixed(1));
+        });
+    </script>
+</body>
+</html>
